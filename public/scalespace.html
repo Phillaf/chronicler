@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="">
+
+<head>
+  <meta charset="utf-8">
+  <title>chronicler</title>
+  <meta name="description" content="">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/5.0.0/normalize.css">
+
+  <style>
+    .octave {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      width:100%;
+    }
+    .gauss {
+    }
+  </style>
+</head>
+
+<body>
+  <div id="octaves"></div>
+  <canvas id="myChart"></canvas>
+  <canvas id="myFilter"></canvas>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.min.js"></script>
+  <script>
+
+  getData().then(data => {
+    createOctaves(data);
+  })
+
+  async function getData() {
+    let response = await fetch('http://localhost');
+    let data = await response.json()
+
+    //data.dates = Array.from(data.dates, x => new Date(x * 1000).toISOString().slice(0,10));
+
+    return data;
+  }
+
+  function createOctaves(data) {
+    console.log(data);
+    container = document.getElementById('octaves');
+    data["octaves"].forEach(octave => {
+      octaveDiv = document.createElement('div');
+      octaveDiv.className = 'octave';
+
+      container.appendChild(octaveDiv);
+      createOctave(octaveDiv, octave);
+    })
+  }
+
+  function createOctave(octaveDiv, data) {
+    console.log(data);
+    dates = Array.from(data.timestamp, x => new Date(x * 1000).toISOString().slice(0,10));
+
+    data['gauss'].forEach(gauss => {
+      gaussDiv = document.createElement('div');
+      gaussCanvas = document.createElement('canvas');
+      gaussDiv.appendChild(gaussCanvas);
+      octaveDiv.appendChild(gaussDiv);
+      plot(gaussCanvas, gauss, dates)
+    })
+
+    data['diffGauss'].forEach(dog => {
+      dogDiv = document.createElement('div');
+      dogCanvas = document.createElement('canvas');
+      dogDiv.appendChild(dogCanvas);
+      octaveDiv.appendChild(dogDiv);
+      plot(dogCanvas, dog, dates)
+    })
+    // createDog
+    // createExtrema
+  }
+
+  function plot(canvas, data, dates) {
+    var ctx = canvas.getContext('2d');
+    var chart = new Chart(ctx, {
+        type: 'line',
+
+        data: {
+            labels: dates,
+            datasets: [
+              {
+                label: 'normalized',
+                borderColor: 'rgb(200, 000, 100)',
+                data: data,
+                lineTension: 0,
+              },
+            ]
+        },
+
+        options: {
+          legend: {
+            display: false,
+          },
+        }
+    });
+  }
+  </script>
+
+</body>
+</html>

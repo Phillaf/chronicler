@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="">
+
+<head>
+  <meta charset="utf-8">
+  <title>chronicler</title>
+  <meta name="description" content="">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/5.0.0/normalize.css">
+
+  <style>
+    #chart {
+      max-height: 800px;
+    }
+    .gauss {
+    }
+  </style>
+</head>
+
+<body>
+  <canvas id="chart"></canvas>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.min.js"></script>
+  <script>
+
+  getData().then(data => {
+    createCurve(data);
+  })
+
+  async function getData() {
+    let response = await fetch('http://localhost');
+    let data = await response.json()
+    return data;
+  }
+
+  function createCurve(data) {
+    curve = data['octaves'][0]['gauss'][1];
+    canvas = document.getElementById('chart');
+    dates = Array.from(data['octaves'][0]['timestamp'], x => new Date(x * 1000).toISOString().slice(0,10));
+    colors = makeColors(data)
+    plot(canvas, curve, dates, colors)
+  }
+
+  function makeColors(data) {
+    let colors = [];
+    let size = data['octaves'][0]['gauss'][0].length;
+    while(size--) colors[size] = 'rgb(100,100,100)';
+    data["octaves"].forEach(octave => {
+      console.log(octave);
+      if (octave.extrema == null) {return;};
+      octave.extrema.forEach(point => {
+        colors[octave.timestamp.indexOf(point)] = 'rgb(250, 0, 100)';
+      })
+    });
+    return colors;
+  }
+
+  function plot(canvas, data, dates, colors) {
+    let ctx = canvas.getContext('2d');
+    let color = 'pink';
+
+    let chart = new Chart(ctx, {
+        type: 'line',
+
+        data: {
+          labels: dates,
+          datasets: [
+            {
+              label: 'normalized',
+              borderColor: 'rgb(100, 100, 100)',
+              data: data,
+              lineTension: 0,
+              pointBackgroundColor: colors
+            },
+          ],
+        },
+
+        options: {
+          legend: {
+            display: false,
+          },
+        }
+    });
+  }
+  </script>
+
+</body>
+</html>
